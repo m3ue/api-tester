@@ -9,7 +9,9 @@ import os
 
 # Base URL is injected at runtime (Render sets PORT; we derive the public URL from
 # the RENDER_EXTERNAL_URL env var that Render provides, falling back to localhost).
-BASE_URL: str = os.getenv("BASE_URL", os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")).rstrip("/")
+BASE_URL: str = os.getenv(
+    "BASE_URL", os.getenv("RENDER_EXTERNAL_URL", "http://localhost:8000")
+).rstrip("/")
 
 SERVER_TIMEZONE: str = os.getenv("SERVER_TIMEZONE", "UTC")
 

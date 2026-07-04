@@ -18,7 +18,12 @@ import time
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import (
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+    Response,
+)
 
 from app.config import (
     ACCOUNT_EXPIRY,
@@ -56,6 +61,7 @@ app = FastAPI(
 # Auth helper
 # ---------------------------------------------------------------------------
 
+
 def _check_auth(username: str | None, password: str | None) -> bool:
     if not username or not password:
         return False
@@ -67,15 +73,17 @@ def _unauth() -> JSONResponse:
 
 
 def _missing_creds() -> JSONResponse:
-    return JSONResponse({"error": "Unauthorized - Missing credentials"}, status_code=401)
+    return JSONResponse(
+        {"error": "Unauthorized - Missing credentials"}, status_code=401
+    )
 
 
 # ---------------------------------------------------------------------------
 # User / server info builders
 # ---------------------------------------------------------------------------
 
+
 def _user_info(username: str, password: str) -> dict:
-    now = int(time.time())
     return {
         "username": username,
         "password": password,
@@ -93,6 +101,7 @@ def _user_info(username: str, password: str) -> dict:
 
 def _server_info() -> dict:
     from urllib.parse import urlparse
+
     parsed = urlparse(BASE_URL)
     return {
         "url": parsed.hostname or "localhost",
@@ -110,6 +119,7 @@ def _server_info() -> dict:
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
 
 @app.get("/", response_class=PlainTextResponse)
 async def root():
@@ -138,10 +148,12 @@ async def player_api(
 
     # ── panel / user info / server info ────────────────────────────────────
     if act in ("panel", "get_user_info", "get_account_info", "get_server_info", ""):
-        return JSONResponse({
-            "user_info": _user_info(username, password),
-            "server_info": _server_info(),
-        })
+        return JSONResponse(
+            {
+                "user_info": _user_info(username, password),
+                "server_info": _server_info(),
+            }
+        )
 
     # ── live categories ────────────────────────────────────────────────────
     if act == "get_live_categories":
@@ -185,10 +197,15 @@ async def player_api(
     # ── series info ────────────────────────────────────────────────────────
     if act == "get_series_info":
         if not series_id:
-            return JSONResponse({"error": "series_id parameter is required for get_series_info action"}, status_code=400)
+            return JSONResponse(
+                {"error": "series_id parameter is required for get_series_info action"},
+                status_code=400,
+            )
         meta = SERIES_BY_ID.get(series_id)
         if not meta:
-            return JSONResponse({"error": "Series not found or not enabled"}, status_code=404)
+            return JSONResponse(
+                {"error": "Series not found or not enabled"}, status_code=404
+            )
         detail = SERIES_INFO.get(series_id, {"seasons": [], "episodes": {}})
         series_info_payload = {
             "name": meta["name"],
@@ -210,19 +227,23 @@ async def player_api(
         }
         # episodes keyed by season number (string keys for Xtream compat)
         episodes_by_season = {
-            str(season_num): eps
-            for season_num, eps in detail["episodes"].items()
+            str(season_num): eps for season_num, eps in detail["episodes"].items()
         }
-        return JSONResponse({
-            "info": series_info_payload,
-            "episodes": episodes_by_season if episodes_by_season else {},
-            "seasons": detail["seasons"],
-        })
+        return JSONResponse(
+            {
+                "info": series_info_payload,
+                "episodes": episodes_by_season if episodes_by_season else {},
+                "seasons": detail["seasons"],
+            }
+        )
 
     # ── VOD info ───────────────────────────────────────────────────────────
     if act == "get_vod_info":
         if not vod_id:
-            return JSONResponse({"error": "vod_id parameter is required for get_vod_info action"}, status_code=400)
+            return JSONResponse(
+                {"error": "vod_id parameter is required for get_vod_info action"},
+                status_code=400,
+            )
         vod = VOD_BY_ID.get(str(vod_id))
         if not vod:
             return JSONResponse({"error": "VOD not found"}, status_code=404)
@@ -245,7 +266,10 @@ async def player_api(
     # ── short EPG ──────────────────────────────────────────────────────────
     if act == "get_short_epg":
         if not stream_id:
-            return JSONResponse({"error": "stream_id parameter is required for get_short_epg action"}, status_code=400)
+            return JSONResponse(
+                {"error": "stream_id parameter is required for get_short_epg action"},
+                status_code=400,
+            )
         channel = LIVE_STREAMS_BY_ID.get(str(stream_id))
         if not channel:
             return JSONResponse({"error": "Channel not found"}, status_code=404)
@@ -256,7 +280,12 @@ async def player_api(
     # ── full EPG (simple data table) ───────────────────────────────────────
     if act == "get_simple_data_table":
         if not stream_id:
-            return JSONResponse({"error": "stream_id parameter is required for get_simple_data_table action"}, status_code=400)
+            return JSONResponse(
+                {
+                    "error": "stream_id parameter is required for get_simple_data_table action"
+                },
+                status_code=400,
+            )
         channel = LIVE_STREAMS_BY_ID.get(str(stream_id))
         if not channel:
             return JSONResponse({"error": "Channel not found"}, status_code=404)
@@ -267,7 +296,9 @@ async def player_api(
         for entry in raw:
             encoded = dict(entry)
             encoded["title"] = base64.b64encode(entry["title"].encode()).decode()
-            encoded["description"] = base64.b64encode(entry["description"].encode()).decode()
+            encoded["description"] = base64.b64encode(
+                entry["description"].encode()
+            ).decode()
             listings.append(encoded)
         return JSONResponse({"epg_listings": listings})
 
@@ -284,6 +315,7 @@ async def player_api(
 # ---------------------------------------------------------------------------
 # M3U playlist endpoint
 # ---------------------------------------------------------------------------
+
 
 @app.get("/get.php", response_class=PlainTextResponse)
 async def get_m3u(
@@ -306,7 +338,7 @@ async def get_m3u(
             f'tvg-name="{s["name"]}" '
             f'tvg-logo="{s["stream_icon"]}" '
             f'group-title="{_cat_name(s["category_id"], LIVE_CATEGORIES)}",'
-            f'{s["name"]}'
+            f"{s['name']}"
         )
         lines.append(stream_url)
 
@@ -317,7 +349,7 @@ async def get_m3u(
             f'tvg-name="{v["name"]}" '
             f'tvg-logo="{v["stream_icon"]}" '
             f'group-title="{_cat_name(v["category_id"], VOD_CATEGORIES)}",'
-            f'{v["name"]}'
+            f"{v['name']}"
         )
         lines.append(stream_url)
 
@@ -334,6 +366,7 @@ def _cat_name(category_id: str, categories: list[dict]) -> str:
 # ---------------------------------------------------------------------------
 # Stream redirect endpoints
 # ---------------------------------------------------------------------------
+
 
 @app.get("/live/{username}/{password}/{stream_id}")
 async def live_stream(username: str, password: str, stream_id: str):
@@ -380,6 +413,7 @@ async def series_stream(username: str, password: str, episode_id: str):
 # ---------------------------------------------------------------------------
 # Health check (Render uses GET /)
 # ---------------------------------------------------------------------------
+
 
 @app.get("/health")
 async def health():

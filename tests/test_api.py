@@ -2,7 +2,6 @@
 API integration tests using FastAPI's TestClient.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -17,6 +16,7 @@ BASE = f"/player_api.php?username={VALID_USER}&password={VALID_PASS}"
 # ---------------------------------------------------------------------------
 # Auth
 # ---------------------------------------------------------------------------
+
 
 def test_missing_credentials_returns_401():
     r = client.get("/player_api.php")
@@ -36,6 +36,7 @@ def test_valid_credentials_return_200():
 # ---------------------------------------------------------------------------
 # Panel / user info
 # ---------------------------------------------------------------------------
+
 
 def test_panel_action_structure():
     r = client.get(f"{BASE}&action=panel")
@@ -70,6 +71,7 @@ def test_get_server_info():
 # Categories
 # ---------------------------------------------------------------------------
 
+
 def test_live_categories():
     r = client.get(f"{BASE}&action=get_live_categories")
     assert r.status_code == 200
@@ -100,6 +102,7 @@ def test_series_categories():
 # Live streams
 # ---------------------------------------------------------------------------
 
+
 def test_get_live_streams():
     r = client.get(f"{BASE}&action=get_live_streams")
     assert r.status_code == 200
@@ -128,6 +131,7 @@ def test_live_streams_no_results_for_unknown_category():
 # ---------------------------------------------------------------------------
 # VOD streams
 # ---------------------------------------------------------------------------
+
 
 def test_get_vod_streams():
     r = client.get(f"{BASE}&action=get_vod_streams")
@@ -163,6 +167,7 @@ def test_get_vod_info_not_found():
 # Series
 # ---------------------------------------------------------------------------
 
+
 def test_get_series():
     r = client.get(f"{BASE}&action=get_series")
     assert r.status_code == 200
@@ -196,6 +201,7 @@ def test_get_series_info_not_found():
 # EPG
 # ---------------------------------------------------------------------------
 
+
 def test_get_short_epg():
     r = client.get(f"{BASE}&action=get_short_epg&stream_id=101")
     assert r.status_code == 200
@@ -224,6 +230,7 @@ def test_get_simple_data_table():
     assert len(data["epg_listings"]) > 0
     # Titles should be base64-encoded
     import base64
+
     first_title_decoded = base64.b64decode(data["epg_listings"][0]["title"]).decode()
     assert len(first_title_decoded) > 0
 
@@ -231,6 +238,7 @@ def test_get_simple_data_table():
 # ---------------------------------------------------------------------------
 # Stream redirects
 # ---------------------------------------------------------------------------
+
 
 def test_live_stream_redirect():
     r = client.get(f"/live/{VALID_USER}/{VALID_PASS}/101.ts")
@@ -259,8 +267,11 @@ def test_stream_redirect_unauth():
 # M3U playlist
 # ---------------------------------------------------------------------------
 
+
 def test_get_m3u_playlist():
-    r = client.get(f"/get.php?username={VALID_USER}&password={VALID_PASS}&type=m3u_plus")
+    r = client.get(
+        f"/get.php?username={VALID_USER}&password={VALID_PASS}&type=m3u_plus"
+    )
     assert r.status_code == 200
     assert r.text.startswith("#EXTM3U")
     assert "#EXTINF" in r.text
@@ -275,6 +286,7 @@ def test_get_m3u_unauth():
 # Invalid action
 # ---------------------------------------------------------------------------
 
+
 def test_invalid_action_returns_400():
     r = client.get(f"{BASE}&action=do_something_invalid")
     assert r.status_code == 400
@@ -283,6 +295,7 @@ def test_invalid_action_returns_400():
 # ---------------------------------------------------------------------------
 # Health
 # ---------------------------------------------------------------------------
+
 
 def test_health_endpoint():
     r = client.get("/health")

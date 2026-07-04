@@ -8,7 +8,6 @@ programme titles that cycle every 30 minutes.
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timezone, timedelta
 
 # ---------------------------------------------------------------------------
@@ -123,20 +122,22 @@ def get_short_epg(epg_channel_id: str, now: datetime, limit: int = 4) -> list[di
         end = start + timedelta(minutes=SLOT_MINUTES)
         is_current = offset == 0
 
-        listings.append({
-            "id": str(slot),
-            "epg_id": "1",
-            "title": title,
-            "lang": "en",
-            "start": start.strftime("%Y-%m-%d %H:%M:%S"),
-            "end": end.strftime("%Y-%m-%d %H:%M:%S"),
-            "description": description,
-            "channel_id": epg_channel_id,
-            "start_timestamp": str(int(start.timestamp())),
-            "stop_timestamp": str(int(end.timestamp())),
-            "now_playing": 1 if is_current else 0,
-            "has_archive": 0,
-        })
+        listings.append(
+            {
+                "id": str(slot),
+                "epg_id": "1",
+                "title": title,
+                "lang": "en",
+                "start": start.strftime("%Y-%m-%d %H:%M:%S"),
+                "end": end.strftime("%Y-%m-%d %H:%M:%S"),
+                "description": description,
+                "channel_id": epg_channel_id,
+                "start_timestamp": str(int(start.timestamp())),
+                "stop_timestamp": str(int(end.timestamp())),
+                "now_playing": 1 if is_current else 0,
+                "has_archive": 0,
+            }
+        )
 
     return listings
 
@@ -162,19 +163,21 @@ def get_full_epg(epg_channel_id: str, now: datetime) -> list[dict]:
         end = start + timedelta(minutes=SLOT_MINUTES)
         is_current = slot == current_slot
 
-        listings.append({
-            "id": str(slot),
-            "epg_id": "1",
-            "title": title,
-            "lang": "en",
-            "start": start.strftime("%Y-%m-%d %H:%M:%S"),
-            "end": end.strftime("%Y-%m-%d %H:%M:%S"),
-            "description": description,
-            "channel_id": epg_channel_id,
-            "start_timestamp": str(int(start.timestamp())),
-            "stop_timestamp": str(int(end.timestamp())),
-            "now_playing": 1 if is_current else 0,
-            "has_archive": 0,
-        })
+        listings.append(
+            {
+                "id": str(slot),
+                "epg_id": "1",
+                "title": title,
+                "lang": "en",
+                "start": start.strftime("%Y-%m-%d %H:%M:%S"),
+                "end": end.strftime("%Y-%m-%d %H:%M:%S"),
+                "description": description,
+                "channel_id": epg_channel_id,
+                "start_timestamp": str(int(start.timestamp())),
+                "stop_timestamp": str(int(end.timestamp())),
+                "now_playing": 1 if is_current else 0,
+                "has_archive": 0,
+            }
+        )
 
     return listings
