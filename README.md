@@ -1,6 +1,6 @@
 # m3u-api-tester
 
-A fully **Xtream Codes-compatible mock API** for testing the [m3u-tv](../m3u-tv) Flutter app (and any other Xtream-compatible IPTV client) without needing a real IPTV subscription.
+A fully **Xtream Codes-compatible mock API** for testing the [m3u-tv](https://github.com/m3ue/m3u-tv) Flutter app (and any other Xtream-compatible IPTV client) without needing a real IPTV subscription.
 
 Use it to:
 - Test app features end-to-end with real API calls
