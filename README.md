@@ -11,10 +11,8 @@ Use it to:
 
 ## Live URL
 
-Once deployed to Render, the API is available at:
-
 ```
-https://m3u-api-tester.onrender.com
+https://api-tester-fcn5.onrender.com
 ```
 
 > The free Render tier sleeps after 15 minutes of inactivity. The first request after sleep takes ~30 s. Upgrade to a paid plan for always-on behaviour.
@@ -46,11 +44,11 @@ Use these settings when adding a server in the m3u-tv app (or any Xtream player)
 
 ## What the API returns
 
-| Type       | Count | Source                                   |
-|------------|-------|------------------------------------------|
-| Live TV    | 10    | Apple HLS bipbop test stream (multi-bitrate) |
-| VOD/Movies | 8     | Blender open movies (MP4, public domain) |
-| Series     | 3     | Blender films split into episodes        |
+| Type       | Count | Source                                                         |
+|------------|-------|----------------------------------------------------------------|
+| Live TV    | 10    | 5 rotating HLS test streams (Apple, Mux, THEOplayer)          |
+| VOD/Movies | 8     | Blender open movies — mix of direct MP4 and HLS, public domain |
+| Series     | 3     | Blender films split into episodes (HLS)                        |
 
 **Categories:**
 - Live: News, Sports, Entertainment, Kids, Documentary
@@ -59,7 +57,7 @@ Use these settings when adding a server in the m3u-tv app (or any Xtream player)
 
 **EPG:** Generated dynamically — always shows a populated 8-day guide.
 
-**Live stream note:** All "live" channels redirect to the same Apple bipbop HLS test stream. It plays reliably in every HLS-capable player and simulates a live feed.
+**Live stream note:** Live channels cycle across 5 distinct HLS test streams (Apple fMP4, Mux pts_shift, Mux x36xhzz, THEOplayer BBB, THEOplayer Elephants Dream). Big Buck Bunny VOD serves a real 64 MB MP4 direct from the Blender Foundation CDN.
 
 ---
 
@@ -83,9 +81,9 @@ Use these settings when adding a server in the m3u-tv app (or any Xtream player)
 
 **Stream URL patterns** (redirect to real media):
 ```
-/live/{username}/{password}/{stream_id}.ts
-/movie/{username}/{password}/{stream_id}.mp4
-/series/{username}/{password}/{episode_id}.mp4
+/live/{username}/{password}/{stream_id}.m3u8
+/movie/{username}/{password}/{stream_id}.{mp4|m3u8}
+/series/{username}/{password}/{episode_id}.m3u8
 /get.php?username=…&password=…&type=m3u_plus
 ```
 
@@ -169,6 +167,6 @@ Edit [app/data.py](app/data.py):
 m3u-editor/        — Laravel backend (source of truth for the Xtream API spec)
 m3u-proxy/         — Python streaming proxy
 m3u-tv/            — Flutter TV app (this API's primary consumer)
-api-tester/    — This repo: mock API for testing m3u-tv
+m3u-api-tester/    — This repo: mock API for testing m3u-tv
 m3u-editor-docs-v2/— Documentation site
 ```
