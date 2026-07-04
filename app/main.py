@@ -466,6 +466,6 @@ async def series_stream(username: str, password: str, episode_id: str):
 # ---------------------------------------------------------------------------
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok", "timestamp": int(time.time())}
