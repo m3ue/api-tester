@@ -38,7 +38,7 @@ Use these settings when adding a server in the m3u-tv app (or any Xtream player)
 
 | Field    | Value                                     |
 |----------|-------------------------------------------|
-| Server   | `https://m3u-api-tester.onrender.com`     |
+| Server   | `https://api-tester-fcn5.onrender.com`     |
 | Username | `testuser`                                |
 | Password | `testpass`                                |
 
