@@ -152,6 +152,10 @@ async def player_api(
             {
                 "user_info": _user_info(username, password),
                 "server_info": _server_info(),
+                "m3u_editor": {
+                    "version": "1.0.0",
+                    "features": ["viewers", "progress"],
+                },
             }
         )
 
@@ -301,6 +305,20 @@ async def player_api(
             ).decode()
             listings.append(encoded)
         return JSONResponse({"epg_listings": listings})
+
+    # ── viewers / progress (m3u-editor extensions) ────────────────────────
+    # Return empty collections so the app doesn't treat these as errors.
+    if act == "get_viewers":
+        return JSONResponse([])
+
+    if act == "create_viewer":
+        return JSONResponse({"id": 1, "name": "Test Viewer", "created_at": "2024-01-01T00:00:00Z"})
+
+    if act in ("get_progress", "get_series_progress", "get_recently_watched"):
+        return JSONResponse([])
+
+    if act == "update_progress":
+        return JSONResponse({"status": "ok"})
 
     # ── M3U plus (redirect to get.php) ────────────────────────────────────
     if act == "m3u_plus":
