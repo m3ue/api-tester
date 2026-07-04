@@ -3,56 +3,69 @@ Static mock data for all Xtream API endpoints.
 
 Media sources
 ─────────────
-• Live streams  → Apple HLS bipbop test stream (reliable, multi-bitrate HLS)
-• VOD / Series  → Google storage sample MP4s (public domain / Creative Commons)
+• All streams  → Apple / Mux HLS test streams (confirmed working 2026-07)
+• Artwork      → placehold.co (real JPEG, seeded by color so consistent)
 
-TMDB IDs are real IDs for the Blender open movies so clients that look up
-metadata will get plausible artwork & descriptions.
+Google Storage gtv-videos-bucket returned 403 as of 2026-07 and has been removed.
+Archive.org CDN nodes are intermittently returning 500. HLS-only approach is more
+reliable — modern players (ExoPlayer, AVPlayer) follow the redirect transparently.
 """
 
 from __future__ import annotations
 
 # ---------------------------------------------------------------------------
-# Stream / redirect targets
+# HLS stream pool (all confirmed 200 OK)
 # ---------------------------------------------------------------------------
 
-# Reliable public multi-bitrate HLS stream used as "live TV" source.
-LIVE_HLS_URL = (
+# Apple fmp4 advanced example — multi-bitrate, fMP4 segments, very stable
+_HLS_APPLE_FHLS = (
     "https://devstreaming-cdn.apple.com/videos/streaming/examples/"
-    "bipbop_adv_example_hevc/master.m3u8"
+    "img_bipbop_adv_example_fmp4/master.m3u8"
 )
-LIVE_HLS_ALT_URL = "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"
+# Mux pts_shift test stream
+_HLS_MUX = "https://test-streams.mux.dev/pts_shift/master.m3u8"
 
-# Google storage sample videos (MP4 — public domain / CC)
-_G = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample"
-VOD_SOURCES: dict[int, str] = {
-    1001: f"{_G}/BigBuckBunny.mp4",
-    1002: f"{_G}/ElephantDream.mp4",
-    1003: f"{_G}/TearsOfSteel.mp4",
-    1004: f"{_G}/Sintel.mp4",
-    1005: f"{_G}/SubaruOutbackOnStreetAndDirt.mp4",
-    1006: f"{_G}/ForBiggerBlazes.mp4",
-    1007: f"{_G}/ForBiggerEscapes.mp4",
-    1008: f"{_G}/ForBiggerFun.mp4",
-    1009: f"{_G}/ForBiggerJoyrides.mp4",
-    1010: f"{_G}/ForBiggerMeltdowns.mp4",
-    1011: f"{_G}/TearsOfSteel.mp4",
-}
+# Rotate across channels so they "feel" different in the guide
+# Note: HEVC stream omitted — not supported on all Android TV hardware
+_HLS_POOL = [_HLS_APPLE_FHLS, _HLS_MUX, _HLS_APPLE_FHLS]
 
-_SERIES_POOL = [
-    f"{_G}/BigBuckBunny.mp4",
-    f"{_G}/ElephantDream.mp4",
-    f"{_G}/TearsOfSteel.mp4",
-    f"{_G}/Sintel.mp4",
-    f"{_G}/ForBiggerBlazes.mp4",
-    f"{_G}/ForBiggerEscapes.mp4",
-    f"{_G}/ForBiggerFun.mp4",
-    f"{_G}/ForBiggerJoyrides.mp4",
-]
+LIVE_HLS_URL = _HLS_APPLE_FHLS
+
+# Primary live stream URL (kept for backward compat with main.py)
+LIVE_HLS_ALT_URL = _HLS_MUX
+
+
+def _hls(index: int) -> str:
+    return _HLS_POOL[index % len(_HLS_POOL)]
+
+
+# ---------------------------------------------------------------------------
+# Artwork helpers (placehold.co — always-up, real JPEG, no auth)
+# Format: https://placehold.co/{w}x{h}/{bg}/{fg}.jpg
+# ---------------------------------------------------------------------------
+
+
+def _poster(bg: str, fg: str = "ffffff") -> str:
+    """300×450 movie poster placeholder."""
+    return f"https://placehold.co/300x450/{bg}/{fg}.jpg"
+
+
+def _thumb(bg: str, fg: str = "ffffff") -> str:
+    """400×225 channel logo / thumbnail placeholder."""
+    return f"https://placehold.co/400x225/{bg}/{fg}.jpg"
+
+
+def _backdrop(bg: str, fg: str = "ffffff") -> str:
+    """1280×720 backdrop image placeholder."""
+    return f"https://placehold.co/1280x720/{bg}/{fg}.jpg"
+
+
+# VOD stream source: all redirected to cycling HLS streams
+VOD_SOURCES: dict[int, str] = {n: _hls(n) for n in range(1001, 1012)}
 
 
 def episode_source(episode_id: int) -> str:
-    return _SERIES_POOL[episode_id % len(_SERIES_POOL)]
+    return _hls(episode_id)
 
 
 # ---------------------------------------------------------------------------
@@ -92,7 +105,7 @@ LIVE_STREAMS: list[dict] = [
         "name": "Demo News 24",
         "stream_type": "live",
         "stream_id": "101",
-        "stream_icon": "",
+        "stream_icon": _thumb("1a237e"),
         "epg_channel_id": "demo.news.24",
         "added": "1700000000",
         "category_id": "1",
@@ -100,15 +113,15 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "demo-news-24",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("1a237e"),
+        "direct_source": _hls(1),
     },
     {
         "num": 2,
         "name": "World Report",
         "stream_type": "live",
         "stream_id": "102",
-        "stream_icon": "",
+        "stream_icon": _thumb("0d47a1"),
         "epg_channel_id": "demo.world.report",
         "added": "1700000000",
         "category_id": "1",
@@ -116,15 +129,15 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "world-report",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_ALT_URL,
+        "thumbnail": _thumb("0d47a1"),
+        "direct_source": _hls(2),
     },
     {
         "num": 3,
         "name": "Business Today",
         "stream_type": "live",
         "stream_id": "103",
-        "stream_icon": "",
+        "stream_icon": _thumb("1b5e20"),
         "epg_channel_id": "demo.business.today",
         "added": "1700000000",
         "category_id": "1",
@@ -132,8 +145,8 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "business-today",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("1b5e20"),
+        "direct_source": _hls(0),
     },
     # ── Sports ────────────────────────────────────────────────────────────
     {
@@ -141,7 +154,7 @@ LIVE_STREAMS: list[dict] = [
         "name": "Demo Sports HD",
         "stream_type": "live",
         "stream_id": "201",
-        "stream_icon": "",
+        "stream_icon": _thumb("1b5e20", "ffeb3b"),
         "epg_channel_id": "demo.sports.hd",
         "added": "1700000000",
         "category_id": "2",
@@ -149,15 +162,15 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "demo-sports-hd",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("1b5e20", "ffeb3b"),
+        "direct_source": _hls(1),
     },
     {
         "num": 5,
         "name": "Sports Extra",
         "stream_type": "live",
         "stream_id": "202",
-        "stream_icon": "",
+        "stream_icon": _thumb("33691e", "ffee58"),
         "epg_channel_id": "demo.sports.extra",
         "added": "1700000000",
         "category_id": "2",
@@ -165,8 +178,8 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "sports-extra",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_ALT_URL,
+        "thumbnail": _thumb("33691e", "ffee58"),
+        "direct_source": _hls(2),
     },
     # ── Entertainment ─────────────────────────────────────────────────────
     {
@@ -174,7 +187,7 @@ LIVE_STREAMS: list[dict] = [
         "name": "Demo Entertainment 1",
         "stream_type": "live",
         "stream_id": "301",
-        "stream_icon": "",
+        "stream_icon": _thumb("4a148c"),
         "epg_channel_id": "demo.entertainment.1",
         "added": "1700000000",
         "category_id": "3",
@@ -182,15 +195,15 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "demo-entertainment-1",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("4a148c"),
+        "direct_source": _hls(0),
     },
     {
         "num": 7,
         "name": "Demo Entertainment 2",
         "stream_type": "live",
         "stream_id": "302",
-        "stream_icon": "",
+        "stream_icon": _thumb("6a1b9a"),
         "epg_channel_id": "demo.entertainment.2",
         "added": "1700000000",
         "category_id": "3",
@@ -198,15 +211,15 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "demo-entertainment-2",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("6a1b9a"),
+        "direct_source": _hls(1),
     },
     {
         "num": 8,
         "name": "Movies & More",
         "stream_type": "live",
         "stream_id": "303",
-        "stream_icon": "",
+        "stream_icon": _thumb("880e4f"),
         "epg_channel_id": "demo.movies.more",
         "added": "1700000000",
         "category_id": "3",
@@ -214,8 +227,8 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "movies-and-more",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_ALT_URL,
+        "thumbnail": _thumb("880e4f"),
+        "direct_source": _hls(2),
     },
     # ── Kids ──────────────────────────────────────────────────────────────
     {
@@ -223,7 +236,7 @@ LIVE_STREAMS: list[dict] = [
         "name": "Kids Zone",
         "stream_type": "live",
         "stream_id": "401",
-        "stream_icon": "",
+        "stream_icon": _thumb("e65100", "fff9c4"),
         "epg_channel_id": "demo.kids.zone",
         "added": "1700000000",
         "category_id": "4",
@@ -231,8 +244,8 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "kids-zone",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("e65100", "fff9c4"),
+        "direct_source": _hls(0),
     },
     # ── Documentary ───────────────────────────────────────────────────────
     {
@@ -240,7 +253,7 @@ LIVE_STREAMS: list[dict] = [
         "name": "Nature & Science",
         "stream_type": "live",
         "stream_id": "501",
-        "stream_icon": "",
+        "stream_icon": _thumb("37474f", "80cbc4"),
         "epg_channel_id": "demo.nature.science",
         "added": "1700000000",
         "category_id": "5",
@@ -248,8 +261,8 @@ LIVE_STREAMS: list[dict] = [
         "tv_archive": 0,
         "tv_archive_duration": 0,
         "custom_sid": "nature-science",
-        "thumbnail": "",
-        "direct_source": LIVE_HLS_URL,
+        "thumbnail": _thumb("37474f", "80cbc4"),
+        "direct_source": _hls(1),
     },
 ]
 
@@ -268,7 +281,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2008",
         "stream_type": "movie",
         "stream_id": "1001",
-        "stream_icon": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg",
+        "stream_icon": _poster("f4a21d", "1a1a2e"),
         "rating": "7.1",
         "rating_5based": 3.55,
         "added": "1700000000",
@@ -276,9 +289,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [11],
         "tmdb": "10378",
         "tmdb_id": 10378,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "big-buck-bunny",
-        "direct_source": VOD_SOURCES[1001],
+        "direct_source": _hls(1),
     },
     {
         "num": 2,
@@ -287,7 +300,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2006",
         "stream_type": "movie",
         "stream_id": "1002",
-        "stream_icon": "",
+        "stream_icon": _poster("1a237e", "b3e5fc"),
         "rating": "6.4",
         "rating_5based": 3.2,
         "added": "1700000000",
@@ -295,9 +308,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [11],
         "tmdb": "68051",
         "tmdb_id": 68051,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "elephants-dream",
-        "direct_source": VOD_SOURCES[1002],
+        "direct_source": _hls(2),
     },
     {
         "num": 3,
@@ -306,7 +319,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2012",
         "stream_type": "movie",
         "stream_id": "1003",
-        "stream_icon": "",
+        "stream_icon": _poster("1a1a2a", "4fc3f7"),
         "rating": "6.8",
         "rating_5based": 3.4,
         "added": "1700000000",
@@ -314,9 +327,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [13],
         "tmdb": "152022",
         "tmdb_id": 152022,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "tears-of-steel",
-        "direct_source": VOD_SOURCES[1003],
+        "direct_source": _hls(0),
     },
     {
         "num": 4,
@@ -325,7 +338,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2010",
         "stream_type": "movie",
         "stream_id": "1004",
-        "stream_icon": "",
+        "stream_icon": _poster("2c3e50", "e74c3c"),
         "rating": "7.5",
         "rating_5based": 3.75,
         "added": "1700000000",
@@ -333,9 +346,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [11],
         "tmdb": "45745",
         "tmdb_id": 45745,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "sintel",
-        "direct_source": VOD_SOURCES[1004],
+        "direct_source": _hls(1),
     },
     {
         "num": 5,
@@ -344,7 +357,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2013",
         "stream_type": "movie",
         "stream_id": "1006",
-        "stream_icon": "",
+        "stream_icon": _poster("8b0000", "ff8a65"),
         "rating": "6.0",
         "rating_5based": 3.0,
         "added": "1700000000",
@@ -352,9 +365,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [10],
         "tmdb": "0",
         "tmdb_id": 0,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "for-bigger-blazes",
-        "direct_source": VOD_SOURCES[1006],
+        "direct_source": _hls(2),
     },
     {
         "num": 6,
@@ -363,7 +376,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2013",
         "stream_type": "movie",
         "stream_id": "1007",
-        "stream_icon": "",
+        "stream_icon": _poster("004d40", "a7ffeb"),
         "rating": "6.2",
         "rating_5based": 3.1,
         "added": "1700000000",
@@ -371,9 +384,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [10],
         "tmdb": "0",
         "tmdb_id": 0,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "for-bigger-escapes",
-        "direct_source": VOD_SOURCES[1007],
+        "direct_source": _hls(0),
     },
     {
         "num": 7,
@@ -382,7 +395,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2013",
         "stream_type": "movie",
         "stream_id": "1008",
-        "stream_icon": "",
+        "stream_icon": _poster("311b92", "ede7f6"),
         "rating": "6.5",
         "rating_5based": 3.25,
         "added": "1700000000",
@@ -390,9 +403,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [12],
         "tmdb": "0",
         "tmdb_id": 0,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "for-bigger-fun",
-        "direct_source": VOD_SOURCES[1008],
+        "direct_source": _hls(1),
     },
     {
         "num": 8,
@@ -401,7 +414,7 @@ VOD_STREAMS: list[dict] = [
         "year": "2013",
         "stream_type": "movie",
         "stream_id": "1005",
-        "stream_icon": "",
+        "stream_icon": _poster("37474f", "eceff1"),
         "rating": "5.5",
         "rating_5based": 2.75,
         "added": "1700000000",
@@ -409,9 +422,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [12],
         "tmdb": "0",
         "tmdb_id": 0,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "custom_sid": "subaru-outback",
-        "direct_source": VOD_SOURCES[1005],
+        "direct_source": _hls(2),
     },
 ]
 
@@ -422,14 +435,14 @@ VOD_INFO: dict[str, dict] = {
         "tmdb_id": 10378,
         "name": "Big Buck Bunny",
         "o_name": "Big Buck Bunny",
-        "cover_big": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg",
-        "movie_image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg",
+        "cover_big": _poster("f4a21d", "1a1a2e"),
+        "movie_image": _poster("f4a21d", "1a1a2e"),
         "release_date": "2008-04-10",
         "episode_run_time": 10,
         "youtube_trailer": "aqz-KE-bpKQ",
         "director": "Sacha Goedegebure",
-        "actors": "",
-        "cast": "",
+        "actors": "No voice actors",
+        "cast": "No voice actors",
         "description": "A large and lovable rabbit deals with three tiny bullies led by a flying squirrel.",
         "plot": "A large and lovable rabbit deals with three tiny bullies led by a flying squirrel.",
         "age": "G",
@@ -437,7 +450,7 @@ VOD_INFO: dict[str, dict] = {
         "rating_count_kinopoisk": 0,
         "country": "Netherlands",
         "genre": "Animation, Short, Comedy",
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("f4a21d", "1a1a2e")],
         "duration_secs": 596,
         "duration": "00:09:56",
         "bitrate": 0,
@@ -450,14 +463,14 @@ VOD_INFO: dict[str, dict] = {
         "tmdb_id": 68051,
         "name": "Elephants Dream",
         "o_name": "Elephants Dream",
-        "cover_big": "",
-        "movie_image": "",
+        "cover_big": _poster("1a237e", "b3e5fc"),
+        "movie_image": _poster("1a237e", "b3e5fc"),
         "release_date": "2006-03-24",
         "episode_run_time": 11,
         "youtube_trailer": "",
         "director": "Bassam Kurdali",
-        "actors": "",
-        "cast": "",
+        "actors": "Cas Jansen, Tygo Gernandt",
+        "cast": "Cas Jansen, Tygo Gernandt",
         "description": "Two strange characters explore a capricious and seemingly infinite machine.",
         "plot": "Two strange characters explore a capricious and seemingly infinite machine.",
         "age": "",
@@ -465,7 +478,7 @@ VOD_INFO: dict[str, dict] = {
         "rating_count_kinopoisk": 0,
         "country": "Netherlands",
         "genre": "Animation, Short, Sci-Fi",
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("1a237e", "b3e5fc")],
         "duration_secs": 654,
         "duration": "00:10:54",
         "bitrate": 0,
@@ -478,22 +491,22 @@ VOD_INFO: dict[str, dict] = {
         "tmdb_id": 152022,
         "name": "Tears of Steel",
         "o_name": "Tears of Steel",
-        "cover_big": "",
-        "movie_image": "",
+        "cover_big": _poster("1a1a2a", "4fc3f7"),
+        "movie_image": _poster("1a1a2a", "4fc3f7"),
         "release_date": "2012-09-26",
         "episode_run_time": 12,
         "youtube_trailer": "R6MlUcmOul8",
         "director": "Ian Hubert",
-        "actors": "",
-        "cast": "",
-        "description": "In a post-apocalyptic future, warriors and scientists take refuge in Amsterdam.",
-        "plot": "In a post-apocalyptic future, warriors and scientists take refuge in Amsterdam.",
-        "age": "",
-        "mpaa_rating": "",
+        "actors": "Derek de Lint, Sergio Hasselbaink, Rogier Schippers",
+        "cast": "Derek de Lint, Sergio Hasselbaink, Rogier Schippers",
+        "description": "In a post-apocalyptic future, a group of warriors and scientists takes refuge in Amsterdam.",
+        "plot": "In a post-apocalyptic future, a group of warriors and scientists takes refuge in Amsterdam.",
+        "age": "PG",
+        "mpaa_rating": "PG",
         "rating_count_kinopoisk": 0,
         "country": "Netherlands",
         "genre": "Short, Sci-Fi, Action",
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("1a1a2a", "4fc3f7")],
         "duration_secs": 734,
         "duration": "00:12:14",
         "bitrate": 0,
@@ -506,27 +519,55 @@ VOD_INFO: dict[str, dict] = {
         "tmdb_id": 45745,
         "name": "Sintel",
         "o_name": "Sintel",
-        "cover_big": "",
-        "movie_image": "",
+        "cover_big": _poster("2c3e50", "e74c3c"),
+        "movie_image": _poster("2c3e50", "e74c3c"),
         "release_date": "2010-09-27",
         "episode_run_time": 14,
         "youtube_trailer": "eRsGyueVLvQ",
         "director": "Colin Levy",
-        "actors": "",
-        "cast": "",
-        "description": "A lonely young woman befriends a small dragon and sets out to find him after he is taken.",
-        "plot": "A lonely young woman befriends a small dragon and sets out to find him after he is taken.",
-        "age": "",
-        "mpaa_rating": "",
+        "actors": "Halina Reijn",
+        "cast": "Halina Reijn",
+        "description": "A lonely young woman befriends a small dragon. After he is taken from her, she sets out on a quest to find him.",
+        "plot": "A lonely young woman befriends a small dragon. After he is taken from her, she sets out on a quest to find him.",
+        "age": "PG",
+        "mpaa_rating": "PG",
         "rating_count_kinopoisk": 0,
         "country": "Netherlands",
         "genre": "Animation, Short, Fantasy",
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("2c3e50", "e74c3c")],
         "duration_secs": 888,
         "duration": "00:14:48",
         "bitrate": 0,
         "rating": "7.5",
         "releasedate": "2010-09-27",
+        "subtitles": [],
+        "kinopoisk_url": "",
+    },
+    "1006": {
+        "tmdb_id": 0,
+        "name": "For Bigger Blazes",
+        "o_name": "For Bigger Blazes",
+        "cover_big": _poster("8b0000", "ff8a65"),
+        "movie_image": _poster("8b0000", "ff8a65"),
+        "release_date": "2013-01-01",
+        "episode_run_time": 1,
+        "youtube_trailer": "",
+        "director": "Google",
+        "actors": "",
+        "cast": "",
+        "description": "A short demo film featuring dramatic action sequences.",
+        "plot": "A short demo film featuring dramatic action sequences.",
+        "age": "G",
+        "mpaa_rating": "G",
+        "rating_count_kinopoisk": 0,
+        "country": "USA",
+        "genre": "Action, Short",
+        "backdrop_path": [_backdrop("8b0000", "ff8a65")],
+        "duration_secs": 60,
+        "duration": "00:01:00",
+        "bitrate": 0,
+        "rating": "6.0",
+        "releasedate": "2013-01-01",
         "subtitles": [],
         "kinopoisk_url": "",
     },
@@ -548,22 +589,23 @@ def _ep(
     duration_secs: int,
     duration: str,
 ) -> dict:
+    thumb = _thumb("263238", "80cbc4")
     return {
         "id": str(ep_id),
         "episode_num": ep_num,
         "title": title,
-        "container_extension": "mp4",
+        "container_extension": "m3u8",
         "info": {
             "release_date": release_date,
             "plot": plot,
             "duration_secs": duration_secs,
             "duration": duration,
-            "movie_image": "",
+            "movie_image": thumb,
             "bitrate": 0,
             "rating": "7.0",
             "season": str(season),
             "tmdb_id": "0",
-            "cover_big": "",
+            "cover_big": thumb,
         },
         "added": "1700000000",
         "season": season,
@@ -581,7 +623,7 @@ SERIES: list[dict] = [
         "num": 1,
         "name": "Blender Open Movies",
         "series_id": 2001,
-        "cover": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/220px-Big_buck_bunny_poster_big.jpg",
+        "cover": _poster("f4a21d", "1a1a2e"),
         "plot": "A curated collection of short animated films produced by the Blender Institute using free and open-source software.",
         "cast": "Various",
         "director": "Various",
@@ -590,7 +632,7 @@ SERIES: list[dict] = [
         "last_modified": "1700000000",
         "rating": "7.8",
         "rating_5based": 3.9,
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("f4a21d", "1a1a2e")],
         "tmdb": "0",
         "tmdb_id": 0,
         "youtube_trailer": "aqz-KE-bpKQ",
@@ -601,16 +643,16 @@ SERIES: list[dict] = [
         "num": 2,
         "name": "Demo Drama Series",
         "series_id": 2002,
-        "cover": "",
-        "plot": "A fictional drama series created for testing IPTV applications. All episodes are sample videos.",
-        "cast": "Test Actor A, Test Actor B",
+        "cover": _poster("1a1a2e", "e53935"),
+        "plot": "A fictional drama series for testing IPTV applications. All episodes stream successfully.",
+        "cast": "Test Actor A, Test Actor B, Jane Demo",
         "director": "Demo Director",
         "genre": "Drama",
         "releaseDate": "2020-01-15",
         "last_modified": "1700000000",
         "rating": "7.2",
         "rating_5based": 3.6,
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("1a1a2e", "e53935")],
         "tmdb": "0",
         "tmdb_id": 0,
         "youtube_trailer": "",
@@ -621,16 +663,16 @@ SERIES: list[dict] = [
         "num": 3,
         "name": "Demo Comedy Show",
         "series_id": 2003,
-        "cover": "",
-        "plot": "A fictional comedy show for testing series playback, season browsing, and episode navigation.",
-        "cast": "Funny Person 1, Funny Person 2",
+        "cover": _poster("f57f17", "1a1a2e"),
+        "plot": "A light-hearted comedy show for testing series playback, season browsing, and episode navigation.",
+        "cast": "Funny Person 1, Funny Person 2, Comedian Three",
         "director": "Comedy Director",
         "genre": "Comedy",
         "releaseDate": "2021-03-01",
         "last_modified": "1700000000",
         "rating": "6.8",
         "rating_5based": 3.4,
-        "backdrop_path": [],
+        "backdrop_path": [_backdrop("f57f17", "1a1a2e")],
         "tmdb": "0",
         "tmdb_id": 0,
         "youtube_trailer": "",
@@ -650,15 +692,16 @@ SERIES_BY_ID: dict[int, dict] = {s["series_id"]: s for s in SERIES}
 def _season(
     num: int, name: str, ep_count: int, overview: str, air_date: str, duration: str
 ) -> dict:
+    cover = _poster("263238", "80cbc4")
     return {
         "name": name,
         "episode_count": ep_count,
         "overview": overview,
         "air_date": air_date,
-        "cover": "",
+        "cover": cover,
         "cover_tmdb": None,
         "season_number": num,
-        "cover_big": None,
+        "cover_big": _backdrop("263238", "80cbc4"),
         "releaseDate": air_date,
         "duration": duration,
     }
@@ -691,7 +734,7 @@ SERIES_INFO: dict[int, dict] = {
                     1,
                     1,
                     "Elephants Dream",
-                    "Two characters explore an infinite machine.",
+                    "Two characters explore a vast infinite machine.",
                     "2006-03-24",
                     654,
                     "00:10:54",
@@ -701,7 +744,7 @@ SERIES_INFO: dict[int, dict] = {
                     2,
                     1,
                     "Big Buck Bunny",
-                    "A lovable rabbit fends off tiny bullies.",
+                    "A lovable giant rabbit fends off three tiny bullies.",
                     "2008-04-10",
                     596,
                     "00:09:56",
@@ -711,7 +754,7 @@ SERIES_INFO: dict[int, dict] = {
                     3,
                     1,
                     "For Bigger Fun",
-                    "A short demo film.",
+                    "A short action-packed demo film.",
                     "2013-01-01",
                     60,
                     "00:01:00",
@@ -723,7 +766,7 @@ SERIES_INFO: dict[int, dict] = {
                     1,
                     2,
                     "Sintel",
-                    "A young woman befriends a small dragon.",
+                    "A young woman embarks on a quest to find her dragon.",
                     "2010-09-27",
                     888,
                     "00:14:48",
@@ -743,7 +786,7 @@ SERIES_INFO: dict[int, dict] = {
                     3,
                     2,
                     "For Bigger Blazes",
-                    "A short action demo film.",
+                    "A short dramatic action demo.",
                     "2013-01-01",
                     60,
                     "00:01:00",
@@ -757,7 +800,7 @@ SERIES_INFO: dict[int, dict] = {
                 1,
                 "Season 1",
                 4,
-                "The first season of Demo Drama Series.",
+                "The gripping first season of Demo Drama Series.",
                 "2020-01-15",
                 "45",
             ),
@@ -765,7 +808,7 @@ SERIES_INFO: dict[int, dict] = {
                 2,
                 "Season 2",
                 2,
-                "The second season of Demo Drama Series.",
+                "The stakes are higher in Season 2.",
                 "2021-01-10",
                 "45",
             ),
@@ -777,7 +820,7 @@ SERIES_INFO: dict[int, dict] = {
                     1,
                     1,
                     "Pilot",
-                    "The story begins.",
+                    "The story begins when a mysterious stranger arrives in town.",
                     "2020-01-15",
                     2700,
                     "00:45:00",
@@ -787,7 +830,7 @@ SERIES_INFO: dict[int, dict] = {
                     2,
                     1,
                     "The Next Step",
-                    "Things escalate.",
+                    "Old secrets come to light as tensions rise.",
                     "2020-01-22",
                     2700,
                     "00:45:00",
@@ -797,7 +840,7 @@ SERIES_INFO: dict[int, dict] = {
                     3,
                     1,
                     "Turning Point",
-                    "A major revelation.",
+                    "A major revelation changes everything.",
                     "2020-01-29",
                     2700,
                     "00:45:00",
@@ -807,7 +850,7 @@ SERIES_INFO: dict[int, dict] = {
                     4,
                     1,
                     "Season Finale",
-                    "Everything comes together.",
+                    "All threads converge in a shocking conclusion.",
                     "2020-02-05",
                     2700,
                     "00:45:00",
@@ -819,7 +862,7 @@ SERIES_INFO: dict[int, dict] = {
                     1,
                     2,
                     "New Beginnings",
-                    "Season 2 opens with a surprise.",
+                    "Season 2 opens with an unexpected twist.",
                     "2021-01-10",
                     2700,
                     "00:45:00",
@@ -829,7 +872,7 @@ SERIES_INFO: dict[int, dict] = {
                     2,
                     2,
                     "The End Game",
-                    "The drama concludes.",
+                    "The saga reaches its dramatic conclusion.",
                     "2021-01-17",
                     2700,
                     "00:45:00",
@@ -840,7 +883,12 @@ SERIES_INFO: dict[int, dict] = {
     2003: {
         "seasons": [
             _season(
-                1, "Season 1", 3, "Laugh out loud with Season 1.", "2021-03-01", "22"
+                1,
+                "Season 1",
+                3,
+                "Laugh out loud in the debut season.",
+                "2021-03-01",
+                "22",
             ),
         ],
         "episodes": {
@@ -850,7 +898,7 @@ SERIES_INFO: dict[int, dict] = {
                     1,
                     1,
                     "Funny Business",
-                    "The comedy begins.",
+                    "The gang's latest scheme goes hilariously wrong.",
                     "2021-03-01",
                     1320,
                     "00:22:00",
@@ -860,7 +908,7 @@ SERIES_INFO: dict[int, dict] = {
                     2,
                     1,
                     "Double Trouble",
-                    "More laughs.",
+                    "Two problems, one terrible solution.",
                     "2021-03-08",
                     1320,
                     "00:22:00",
@@ -870,7 +918,7 @@ SERIES_INFO: dict[int, dict] = {
                     3,
                     1,
                     "Grand Finale",
-                    "The funniest episode yet.",
+                    "Everything comes together in the funniest episode yet.",
                     "2021-03-15",
                     1320,
                     "00:22:00",

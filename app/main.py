@@ -126,7 +126,7 @@ async def root():
     return "M3U API Tester is running. Use /player_api.php to connect."
 
 
-@app.get("/player_api.php")
+@app.api_route("/player_api.php", methods=["GET", "POST"])
 async def player_api(
     request: Request,
     username: str | None = Query(default=None),
@@ -136,6 +136,7 @@ async def player_api(
     series_id: int | None = Query(default=None),
     vod_id: str | None = Query(default=None),
     stream_id: str | None = Query(default=None),
+    stream_ids: str | None = Query(default=None),
     limit: int = Query(default=4),
 ) -> Response:
     if not username or not password:
@@ -312,13 +313,26 @@ async def player_api(
         return JSONResponse([])
 
     if act == "create_viewer":
-        return JSONResponse({"id": 1, "name": "Test Viewer", "created_at": "2024-01-01T00:00:00Z"})
+        return JSONResponse(
+            {"id": 1, "name": "Test Viewer", "created_at": "2024-01-01T00:00:00Z"}
+        )
 
     if act in ("get_progress", "get_series_progress", "get_recently_watched"):
         return JSONResponse([])
 
     if act == "update_progress":
         return JSONResponse({"status": "ok"})
+
+    # ── EPG batch (multiple channels at once) ─────────────────────────────
+    if act == "get_epg_batch":
+        ids = [s.strip() for s in (stream_ids or "").split(",") if s.strip()]
+        result: dict[str, list] = {}
+        for sid in ids:
+            channel = LIVE_STREAMS_BY_ID.get(sid)
+            if channel:
+                epg_id = channel.get("epg_channel_id", "")
+                result[sid] = get_short_epg(epg_id, now, limit=limit)
+        return JSONResponse(result)
 
     # ── M3U plus (redirect to get.php) ────────────────────────────────────
     if act == "m3u_plus":
@@ -379,6 +393,25 @@ def _cat_name(category_id: str, categories: list[dict]) -> str:
         if c["category_id"] == category_id:
             return c["category_name"]
     return "Uncategorised"
+
+
+# ---------------------------------------------------------------------------
+# m3u-editor TV API stubs (called by the Flutter app on boot)
+# ---------------------------------------------------------------------------
+
+
+@app.get("/api/tv/{username}/{password}/notifications")
+async def tv_notifications(username: str, password: str):
+    if not _check_auth(username, password):
+        return _unauth()
+    return JSONResponse({"notifications": [], "reverb": {}, "available_channels": []})
+
+
+@app.post("/api/tv/{username}/{password}/notifications/{notification_id}/read")
+async def tv_notification_read(username: str, password: str, notification_id: str):
+    if not _check_auth(username, password):
+        return _unauth()
+    return JSONResponse({"status": "ok"})
 
 
 # ---------------------------------------------------------------------------

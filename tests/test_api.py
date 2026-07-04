@@ -142,6 +142,7 @@ def test_get_vod_streams():
     first = data[0]
     assert first["stream_type"] == "movie"
     assert "tmdb_id" in first
+    assert first["container_extension"] == "m3u8"
 
 
 def test_get_vod_info():
@@ -247,13 +248,13 @@ def test_live_stream_redirect():
 
 
 def test_vod_stream_redirect():
-    r = client.get(f"/movie/{VALID_USER}/{VALID_PASS}/1001.mp4")
+    r = client.get(f"/movie/{VALID_USER}/{VALID_PASS}/1001.m3u8")
     assert r.status_code == 302
-    assert "mp4" in r.headers["location"]
+    assert r.headers["location"].startswith("https://")
 
 
 def test_series_stream_redirect():
-    r = client.get(f"/series/{VALID_USER}/{VALID_PASS}/3001.mp4")
+    r = client.get(f"/series/{VALID_USER}/{VALID_PASS}/3001.m3u8")
     assert r.status_code == 302
     assert r.headers["location"].startswith("https://")
 
@@ -285,6 +286,35 @@ def test_get_m3u_unauth():
 # ---------------------------------------------------------------------------
 # Invalid action
 # ---------------------------------------------------------------------------
+
+
+def test_get_epg_batch():
+    r = client.get(f"{BASE}&action=get_epg_batch&stream_ids=101,201&limit=2")
+    assert r.status_code == 200
+    data = r.json()
+    assert isinstance(data, dict)
+    assert "101" in data
+    assert "201" in data
+    assert len(data["101"]) == 2
+
+
+def test_get_epg_batch_unknown_ids():
+    r = client.get(f"{BASE}&action=get_epg_batch&stream_ids=9999")
+    assert r.status_code == 200
+    assert r.json() == {}
+
+
+def test_tv_notifications():
+    r = client.get(f"/api/tv/{VALID_USER}/{VALID_PASS}/notifications")
+    assert r.status_code == 200
+    data = r.json()
+    assert "notifications" in data
+    assert data["notifications"] == []
+
+
+def test_tv_notifications_unauth():
+    r = client.get("/api/tv/bad/creds/notifications")
+    assert r.status_code == 401
 
 
 def test_invalid_action_returns_400():
