@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: m3u-api-tester
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: BASE_URL
+        # Render sets RENDER_EXTERNAL_URL automatically — this is a fallback.
+        value: https://m3u-api-tester.onrender.com
+      - key: SERVER_TIMEZONE
+        value: UTC
+    autoDeploy: true
