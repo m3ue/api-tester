@@ -169,6 +169,6 @@ Edit [app/data.py](app/data.py):
 m3u-editor/        — Laravel backend (source of truth for the Xtream API spec)
 m3u-proxy/         — Python streaming proxy
 m3u-tv/            — Flutter TV app (this API's primary consumer)
-m3u-api-tester/    — This repo: mock API for testing m3u-tv
+api-tester/    — This repo: mock API for testing m3u-tv
 m3u-editor-docs-v2/— Documentation site
 ```
