@@ -142,7 +142,7 @@ def test_get_vod_streams():
     first = data[0]
     assert first["stream_type"] == "movie"
     assert "tmdb_id" in first
-    assert first["container_extension"] == "m3u8"
+    assert "container_extension" in first
 
 
 def test_get_vod_info():

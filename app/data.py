@@ -17,22 +17,32 @@ from __future__ import annotations
 # HLS stream pool (all confirmed 200 OK)
 # ---------------------------------------------------------------------------
 
-# Apple fmp4 advanced example — multi-bitrate, fMP4 segments, very stable
+# Five distinct HLS test streams (all confirmed 200 OK)
 _HLS_APPLE_FHLS = (
     "https://devstreaming-cdn.apple.com/videos/streaming/examples/"
     "img_bipbop_adv_example_fmp4/master.m3u8"
 )
-# Mux pts_shift test stream
-_HLS_MUX = "https://test-streams.mux.dev/pts_shift/master.m3u8"
+_HLS_MUX_PTS = "https://test-streams.mux.dev/pts_shift/master.m3u8"
+_HLS_MUX_BBB = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+_HLS_THEO_BBB = "https://cdn.theoplayer.com/video/big_buck_bunny/big_buck_bunny.m3u8"
+_HLS_THEO_ED = "https://cdn.theoplayer.com/video/elephants-dream/playlist.m3u8"
 
-# Rotate across channels so they "feel" different in the guide
-# Note: HEVC stream omitted — not supported on all Android TV hardware
-_HLS_POOL = [_HLS_APPLE_FHLS, _HLS_MUX, _HLS_APPLE_FHLS]
+# Big Buck Bunny 320×180 MP4 (64 MB) — Blender Foundation CDN, CC BY 3.0
+_MP4_BBB = (
+    "https://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_320x180.mp4"
+)
+
+# Pool used for live channels and less-specific VOD entries
+_HLS_POOL = [
+    _HLS_APPLE_FHLS,
+    _HLS_MUX_PTS,
+    _HLS_MUX_BBB,
+    _HLS_THEO_BBB,
+    _HLS_THEO_ED,
+]
 
 LIVE_HLS_URL = _HLS_APPLE_FHLS
-
-# Primary live stream URL (kept for backward compat with main.py)
-LIVE_HLS_ALT_URL = _HLS_MUX
+LIVE_HLS_ALT_URL = _HLS_MUX_PTS
 
 
 def _hls(index: int) -> str:
@@ -289,9 +299,9 @@ VOD_STREAMS: list[dict] = [
         "category_ids": [11],
         "tmdb": "10378",
         "tmdb_id": 10378,
-        "container_extension": "m3u8",
+        "container_extension": "mp4",
         "custom_sid": "big-buck-bunny",
-        "direct_source": _hls(1),
+        "direct_source": _MP4_BBB,
     },
     {
         "num": 2,
@@ -310,7 +320,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 68051,
         "container_extension": "m3u8",
         "custom_sid": "elephants-dream",
-        "direct_source": _hls(2),
+        "direct_source": _HLS_THEO_ED,
     },
     {
         "num": 3,
@@ -329,7 +339,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 152022,
         "container_extension": "m3u8",
         "custom_sid": "tears-of-steel",
-        "direct_source": _hls(0),
+        "direct_source": _HLS_MUX_BBB,
     },
     {
         "num": 4,
@@ -348,7 +358,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 45745,
         "container_extension": "m3u8",
         "custom_sid": "sintel",
-        "direct_source": _hls(1),
+        "direct_source": _HLS_THEO_BBB,
     },
     {
         "num": 5,
@@ -367,7 +377,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 0,
         "container_extension": "m3u8",
         "custom_sid": "for-bigger-blazes",
-        "direct_source": _hls(2),
+        "direct_source": _HLS_MUX_PTS,
     },
     {
         "num": 6,
@@ -386,7 +396,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 0,
         "container_extension": "m3u8",
         "custom_sid": "for-bigger-escapes",
-        "direct_source": _hls(0),
+        "direct_source": _HLS_APPLE_FHLS,
     },
     {
         "num": 7,
@@ -405,7 +415,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 0,
         "container_extension": "m3u8",
         "custom_sid": "for-bigger-fun",
-        "direct_source": _hls(1),
+        "direct_source": _HLS_THEO_ED,
     },
     {
         "num": 8,
@@ -424,7 +434,7 @@ VOD_STREAMS: list[dict] = [
         "tmdb_id": 0,
         "container_extension": "m3u8",
         "custom_sid": "subaru-outback",
-        "direct_source": _hls(2),
+        "direct_source": _HLS_MUX_BBB,
     },
 ]
 
