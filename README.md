@@ -15,7 +15,7 @@ Use it to:
 https://api-tester-fcn5.onrender.com
 ```
 
-> The free Render tier sleeps after 15 minutes of inactivity. The first request after sleep takes ~30 s. Upgrade to a paid plan for always-on behaviour.
+> The free Render tier sleeps after 15 minutes of inactivity. The first request after sleep takes ~30-50s. Upgrade to a paid plan for always-on behaviour, or user [UptimeRobot](https://uptimerobot.com) to monitor the `/health` endpoint of the public URL (the default/free 5min interval will work fine to keep the service warm).
 
 ---
 
